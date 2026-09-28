@@ -1,3 +1,5 @@
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -23,7 +25,7 @@ public class spotify_api {
     // private authorization key
     private String encoder;
 
-    private String token;
+    private Token token;
 
     public spotify_api() throws URISyntaxException, IOException, InterruptedException {
 
@@ -35,6 +37,9 @@ public class spotify_api {
         this.encoder = Base64.getEncoder().encodeToString(authorization_String_utf8);
 
         Get_Authorization_token();
+
+        System.out.println(this.token.getToken());
+        System.out.println(this.token.getType());
     }
 
 
@@ -56,12 +61,16 @@ public class spotify_api {
 
     }
 
-    private String extract_token (HttpResponse<String> response){
+    private Token extract_token (HttpResponse<String> response) throws JsonProcessingException {
 
-        System.out.println(response.body());
+        ObjectMapper objectMapper = new ObjectMapper();
 
+        JsonNode rootNode = objectMapper.readTree(response.body());
 
-        return  " ";
+        String token = rootNode.get("access_token").asText();
+        String type = rootNode.get("token_type").asText();
+
+        return new Token(token,type);
     }
 
     // create playlist with a giving name
