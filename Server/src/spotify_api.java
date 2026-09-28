@@ -11,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.Flow;
@@ -65,14 +66,20 @@ public class spotify_api {
 
     private Token extract_token (HttpResponse<String> response) throws JsonProcessingException {
 
+        // will be used in order to read json
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode rootNode = objectMapper.readTree(response.body());
 
+        // extract data from json
         String token = rootNode.get("access_token").asText();
         String type = rootNode.get("token_type").asText();
+        Long token_expire = rootNode.get("expires_in").asLong();
 
-        return new Token(token,type);
+        // create expire time
+        LocalDateTime expires_in = LocalDateTime.now().plusSeconds(token_expire);
+
+        return new Token(token,type,expires_in);
     }
 
     // create playlist with a giving name
