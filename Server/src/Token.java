@@ -1,13 +1,14 @@
 import java.sql.Date;
 import java.sql.Time;
+import java.time.LocalDateTime;
 
 public class Token {
 
     private String token;
     private String type;
-    private Date expires_in;
+    private LocalDateTime expires_in;
 
-    public Token(String token, String type, Date expires_in) {
+    public Token(String token, String type, LocalDateTime expires_in) {
         this.token = token;
         this.type = type;
         this.expires_in = expires_in;
@@ -21,9 +22,6 @@ public class Token {
         return type;
     }
 
-    public Date getExpires_in() {
-        return expires_in;
-    }
 
     public void setToken(String token) {
         this.token = token;
@@ -33,7 +31,11 @@ public class Token {
         this.type = type;
     }
 
-    public void setExpires_in(Date expires_in) {
+    public LocalDateTime getExpires_in() {
+        return expires_in;
+    }
+
+    public void setExpires_in(LocalDateTime expires_in) {
         this.expires_in = expires_in;
     }
 }
