@@ -1,0 +1,116 @@
+package ServerHelper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Base64;
+
+public class spotify_api {
+
+    // my id + secret
+    final private String id = "bce0c09c5e754f7f9d528abcfbcf5fe2";
+    final private String secret = "46b878da0a5243c6a667797f8e19dde7";
+
+    private String UserTokenUri = "https://accounts.spotify.com/authorize?";
+
+    private String redirect_uri = URLEncoder.encode("http://127.0.0.1:8080/spotify/callback", StandardCharsets.UTF_8);
+
+
+    // spotify authorization url
+    private URI url = new URI("https://accounts.spotify.com/api/token");
+
+
+    // private authorization key
+    private String encoder;
+
+    private Token token;
+
+    public void printToken(){
+        System.out.println(this.token);
+    }
+
+    public spotify_api() throws URISyntaxException, IOException, InterruptedException {
+
+        // authorization key encode
+        String authorization_String = id + ":" + secret;
+
+        // encode in utf_8 format
+        byte [] authorization_String_utf8 = authorization_String.getBytes(StandardCharsets.UTF_8);
+        this.encoder = Base64.getEncoder().encodeToString(authorization_String_utf8);
+
+        Get_Authorization_token();
+
+        System.out.println(this.token.getToken());
+        System.out.println(this.token.getType());
+    }
+    public void  getUserToken(String code,String redirect_uri) throws IOException, InterruptedException {
+        String body = "code=" + code +
+                    "&redirect_uri="+ redirect_uri +
+                    "&grant_type=client_credentials";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(this.url)
+                .header("Authorization","Basic " + this.encoder)
+                .headers("Content-Type"," application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request,  HttpResponse.BodyHandlers.ofString());
+
+        this.token = extract_token(response);
+    }
+
+    private void Get_Authorization_token () throws IOException, InterruptedException {
+
+        // send id + secrete in oder to get a token using http post request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(this.url)
+                .header("Authorization","Basic " + this.encoder)
+                .headers("Content-Type"," application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString("grant_type=client_credentials"))
+                .build();
+
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                                        .send(request,  HttpResponse.BodyHandlers.ofString());
+
+        this.token = extract_token(response);
+
+    }
+
+    private Token extract_token (HttpResponse<String> response) throws JsonProcessingException {
+
+        // will be used in order to read json
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JsonNode rootNode = objectMapper.readTree(response.body());
+
+        // extract data from json
+        String token = rootNode.get("access_token").asText();
+        String type = rootNode.get("token_type").asText();
+        Long token_expire = rootNode.get("expires_in").asLong();
+
+        // create expire time
+        LocalDateTime expires_in = LocalDateTime.now().plusSeconds(token_expire);
+
+        return new Token(token,type,expires_in);
+    }
+
+    // create playlist with a giving name
+    private void create_playlist(String name){
+
+    }
+
+}
