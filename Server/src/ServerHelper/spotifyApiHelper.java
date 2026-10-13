@@ -15,19 +15,18 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
-public class spotify_api {
+public class spotifyApiHelper {
 
-    // my id + secret
-    final private String id = "bce0c09c5e754f7f9d528abcfbcf5fe2";
+    // user id
+    final private String UserId = "bce0c09c5e754f7f9d528abcfbcf5fe2";
+    // user secret
     final private String secret = "46b878da0a5243c6a667797f8e19dde7";
 
-    private String UserTokenUri = "https://accounts.spotify.com/authorize?";
-
-    private String redirect_uri = URLEncoder.encode("http://127.0.0.1:8080/spotify/callback", StandardCharsets.UTF_8);
-
+    // url for authorize user
+    private String authorizeUri = "https://accounts.spotify.com/authorize?";
 
     // spotify authorization url
-    private URI url = new URI("https://accounts.spotify.com/api/token");
+    private URI GetTokenUrl = new URI("https://accounts.spotify.com/api/token");
 
 
     // private authorization key
@@ -35,61 +34,40 @@ public class spotify_api {
 
     private Token token;
 
-    public void printToken(){
-        System.out.println(this.token);
+    public spotifyApiHelper() throws URISyntaxException {
+        String authorizationCoder = UserId + ':' + secret;
+        encoder = Base64.getEncoder().encodeToString(authorizationCoder.getBytes(StandardCharsets.UTF_8));
     }
 
-    public spotify_api() throws URISyntaxException, IOException, InterruptedException {
 
-        // authorization key encode
-        String authorization_String = id + ":" + secret;
+    // getters
+    public String geAuthorizeUri(){return authorizeUri;}
 
-        // encode in utf_8 format
-        byte [] authorization_String_utf8 = authorization_String.getBytes(StandardCharsets.UTF_8);
-        this.encoder = Base64.getEncoder().encodeToString(authorization_String_utf8);
+    public String getUserId(){return UserId;}
 
-        Get_Authorization_token();
-
-        System.out.println(this.token.getToken());
-        System.out.println(this.token.getType());
-    }
-    public void  getUserToken(String code,String redirect_uri) throws IOException, InterruptedException {
+    // get token for a Specific User
+    public Token getUserToken(String code,String redirect_uri) throws IOException, InterruptedException {
         String body = "code=" + code +
                     "&redirect_uri="+ redirect_uri +
                     "&grant_type=client_credentials";
 
+        // sending http request in order to get a token
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(this.url)
+                .uri(GetTokenUrl)
                 .header("Authorization","Basic " + this.encoder)
                 .headers("Content-Type"," application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-
+        // get a response
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request,  HttpResponse.BodyHandlers.ofString());
 
-        this.token = extract_token(response);
+        // extract data and return token type data
+        return extract_token(response);
     }
 
-    private void Get_Authorization_token () throws IOException, InterruptedException {
-
-        // send id + secrete in oder to get a token using http post request
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(this.url)
-                .header("Authorization","Basic " + this.encoder)
-                .headers("Content-Type"," application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString("grant_type=client_credentials"))
-                .build();
-
-
-        HttpResponse<String> response = HttpClient.newHttpClient()
-                                        .send(request,  HttpResponse.BodyHandlers.ofString());
-
-        this.token = extract_token(response);
-
-    }
-
+    // read json response from spotify api in order to get token
     private Token extract_token (HttpResponse<String> response) throws JsonProcessingException {
 
         // will be used in order to read json

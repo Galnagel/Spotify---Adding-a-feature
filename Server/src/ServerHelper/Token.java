@@ -1,8 +1,9 @@
-package ServerHekper;
+package ServerHelper;
 
 import java.time.LocalDateTime;
 
 public class Token {
+
 
     private String token;
     private String type;
@@ -38,4 +39,6 @@ public class Token {
     public void setExpires_in(LocalDateTime expires_in) {
         this.expires_in = expires_in;
     }
+
+
 }
