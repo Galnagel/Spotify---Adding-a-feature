@@ -36,9 +36,9 @@ public class AppController {
         String Url = helper.geAuthorizeUri()+
                 "response_type=code" +
                 "&client_id=" + helper.getUserId() +
-                "&redirect_uri=" + redirect_uri;
-
-//        model.addAttribute("");
+                "&redirect_uri=" + redirect_uri +
+                "&scope=" + helper.getScope()+
+                "&show_dialog=true";
 
          return new RedirectView(Url);
     }
@@ -53,11 +53,13 @@ public class AppController {
             return "";
         }
 
-        token =  helper.getUserToken(code,redirect_uri);
+       this.token = helper.getUserToken(code,redirect_uri);
 
-        model.addAttribute("");
+        System.out.println(token.getType() + " " + token.getToken() );
 
-        return "logIn.html";
+//        helper.create_playlist(token,"Playlist",false,"my first playlist using spotify api");
+
+        return "CreatePlaylist.html";
     }
 
 }

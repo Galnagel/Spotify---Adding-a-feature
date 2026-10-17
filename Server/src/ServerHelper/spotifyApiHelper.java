@@ -14,6 +14,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class spotifyApiHelper {
 
@@ -28,11 +30,12 @@ public class spotifyApiHelper {
     // spotify authorization url
     private URI GetTokenUrl = new URI("https://accounts.spotify.com/api/token");
 
+    private String scope = URLEncoder.encode("playlist-modify-private",StandardCharsets.UTF_8);
+
 
     // private authorization key
     private String encoder;
 
-    private Token token;
 
     public spotifyApiHelper() throws URISyntaxException {
         String authorizationCoder = UserId + ':' + secret;
@@ -45,23 +48,26 @@ public class spotifyApiHelper {
 
     public String getUserId(){return UserId;}
 
+    public String getScope(){return scope;}
+
     // get token for a Specific User
     public Token getUserToken(String code,String redirect_uri) throws IOException, InterruptedException {
         String body = "code=" + code +
                     "&redirect_uri="+ redirect_uri +
-                    "&grant_type=client_credentials";
+                    "&grant_type=authorization_code";
 
         // sending http request in order to get a token
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(GetTokenUrl)
                 .header("Authorization","Basic " + this.encoder)
-                .headers("Content-Type"," application/x-www-form-urlencoded")
+                .headers("Content-Type","application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
         // get a response
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request,  HttpResponse.BodyHandlers.ofString());
+
 
         // extract data and return token type data
         return extract_token(response);
@@ -87,7 +93,29 @@ public class spotifyApiHelper {
     }
 
     // create playlist with a giving name
-    private void create_playlist(String name){
+    public void create_playlist(Token token,String name,String description) throws URISyntaxException, IOException, InterruptedException {
+
+        Map<String,String> jsonData = new HashMap<>();
+
+        jsonData.put("name",name);
+        jsonData.put("description",description);
+        jsonData.put("public","false");
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(jsonData);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI("https://api.spotify.com/v1/me/playlists"))
+                    .header("Authorization",token.getType() + " " + token.getToken())
+                    .headers("Content-Type","application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+
+
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request,  HttpResponse.BodyHandlers.ofString());
+
 
     }
 
