@@ -4,18 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create playlist</title>
-    <link href="static/css/CreatePlaylist.css" rel="stylesheet">
+    <link href="/css/CreatePlaylist.css" rel="stylesheet">
 </head>
 
 <body>
-    <form action="CreatePlaylist">
-        <label for="Pname">Playlist name</label>
-        <input type="text" id="Pname">
+    <form action="CreatePlaylist" method="post">
 
-        <label for="Description">Playlist name</label>
-        <input type="text" id="Description">
+        <div class="data-field">
+            <label for="Pname">Playlist name</label>
+            <input type="text" id="Pname" name="playlistName" required>
+        </div>
 
-        <input type="submit">
+        <div class="data-field">
+            <label for="Description">Playlist description</label>
+            <input type="text" id="Description" name="playlistDescription" required>
+        </div>
+
+        <button type="submit">Create Playlist</button>
     </form>
 </body>
 </html>

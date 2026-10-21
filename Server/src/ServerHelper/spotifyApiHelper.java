@@ -30,8 +30,9 @@ public class spotifyApiHelper {
     // spotify authorization url
     private URI GetTokenUrl = new URI("https://accounts.spotify.com/api/token");
 
-    private String scope = URLEncoder.encode("playlist-modify-private",StandardCharsets.UTF_8);
+    private String scope = URLEncoder.encode("playlist-modify-private playlist-read-private",StandardCharsets.UTF_8);
 
+    private URI GetUserPlaylistsUrl = new URI("https://api.spotify.com/v1/me/playlists");
 
     // private authorization key
     private String encoder;
@@ -92,14 +93,31 @@ public class spotifyApiHelper {
         return new Token(token,type,expires_in);
     }
 
+    public boolean playlistExists(Token token,String name) throws IOException, InterruptedException {
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(GetUserPlaylistsUrl)
+                .headers("Authorization",token.getType() + " " + token.getToken())
+                .headers("Content-Type","application/json")
+                .GET()
+                .build();
+
+        HttpResponse <String> response =  HttpClient.newHttpClient()
+                .send(request,  HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("playlistExists methode response " +  response.body());
+
+        return true;
+    }
+
     // create playlist with a giving name
     public void create_playlist(Token token,String name,String description) throws URISyntaxException, IOException, InterruptedException {
 
-        Map<String,String> jsonData = new HashMap<>();
+        Map<String,Object> jsonData = new HashMap<>();
 
         jsonData.put("name",name);
         jsonData.put("description",description);
-        jsonData.put("public","false");
+        jsonData.put("public",false);
 
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(jsonData);
@@ -115,6 +133,10 @@ public class spotifyApiHelper {
 
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request,  HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("create_playlist methode response: " + response);
+        System.out.println("Status: " + response.statusCode());
+        System.out.println("Body: " + response.body());
 
 
     }

@@ -4,6 +4,7 @@ import ServerHelper.Token;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -55,11 +56,25 @@ public class AppController {
 
        this.token = helper.getUserToken(code,redirect_uri);
 
-        System.out.println(token.getType() + " " + token.getToken() );
-
-//        helper.create_playlist(token,"Playlist",false,"my first playlist using spotify api");
-
         return "CreatePlaylist.html";
+    }
+
+    @PostMapping("spotify/CreatePlaylist")
+    public String createPlaylist(@RequestParam(required = false)String playlistName,
+                               @RequestParam(required = false)String playlistDescription,
+                               @RequestParam(required = false)String error) throws URISyntaxException, IOException, InterruptedException {
+
+        if(error != null) {
+            System.out.println("error");
+            return " ";
+        }
+
+        else {
+            helper.create_playlist(token,playlistName,playlistDescription);
+
+//            helper.create_playlist(token,playlistName,playlistDescription);
+            return "CreatePlaylist.html";
+        }
     }
 
 }
