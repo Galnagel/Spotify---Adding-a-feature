@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create playlist</title>
+    <link href="/css/CreatePlaylist.css" rel="stylesheet">
+</head>
+
+<body>
+    <form action="CreatePlaylist" method="post">
+
+        <div class="data-field">
+            <label for="Pname">Playlist name</label>
+            <input type="text" id="Pname" name="playlistName" required>
+        </div>
+
+        <div class="data-field">
+            <label for="Description">Playlist description</label>
+            <input type="text" id="Description" name="playlistDescription" required>
+        </div>
+
+        <button type="submit">Create Playlist</button>
+    </form>
+</body>
+</html>

@@ -81,7 +81,7 @@ public class AppController {
             return "";
         }
 
-       helper.getLastToken();
+//       helper.getLastToken();
 
 
         return "CreatePlaylist.html";
