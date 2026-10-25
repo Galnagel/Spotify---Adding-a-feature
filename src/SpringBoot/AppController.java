@@ -68,7 +68,7 @@ public class AppController {
         this.spotifyApiToken = helper.getUserToken(code, redirect_uri);
 
         // נפנה את המשתמש לעמוד
-        return new RedirectView("http://www.last.fm/api/auth/?api_key=" + helper.LastApiKey);
+        return new RedirectView("/HomePage");
     }
 
     @GetMapping("/HomePage")

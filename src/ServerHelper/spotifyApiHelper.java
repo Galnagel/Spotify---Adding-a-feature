@@ -1,5 +1,7 @@
 package ServerHelper;
 
+
+import Private.ApiKeys;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +16,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -21,45 +24,27 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import Private.ApiKeys;
+
 public class spotifyApiHelper {
-
-    // user id
-    final private String UserId = "bce0c09c5e754f7f9d528abcfbcf5fe2";
-    // user secret
-    final private String secret = "46b878da0a5243c6a667797f8e19dde7";
-
-    // url for authorize user
-    private String authorizeUri = "https://accounts.spotify.com/authorize?";
-
-    // spotify authorization uri
-    private URI GetTokenUri = new URI("https://accounts.spotify.com/api/token");
-
-    private String scope = URLEncoder.encode("playlist-modify-private playlist-read-private",StandardCharsets.UTF_8);
-
-    private URI GetUserPlaylistsUri = new URI("https://api.spotify.com/v1/me/playlists");
-
-    private String getRecommendationsUri = "https://api.spotify.com/v1/recommendations?";
-
-    public String LastApiKey = "a8524c28758188a8ef97f9a757b14d22";
-
-    public String LastSecrete = "750a5a974ea0e3a986097dbecf079d64";
 
     // private authorization key
     private String encoder;
 
+    private ApiKeys Key;
 
+//__________________________________________________________________________________________________________
+//  constructor
+// __________________________________________________________________________________________________________
     public spotifyApiHelper() throws URISyntaxException {
-        String authorizationCoder = UserId + ':' + secret;
+
+        Key = new ApiKeys();
+
+        String authorizationCoder = Key.getUserId() + ':' + Key.getSecret();
         encoder = Base64.getEncoder().encodeToString(authorizationCoder.getBytes(StandardCharsets.UTF_8));
+
     }
-
-
-    // getters
-    public String geAuthorizeUri(){return authorizeUri;}
-
-    public String getUserId(){return UserId;}
-
-    public String getScope(){return scope;}
+// __________________________________________________________________________________________________________
 
     // get token for a Specific User
     public SpotifyApiToken getUserToken(String code, String redirect_uri) throws IOException, InterruptedException {
@@ -70,7 +55,7 @@ public class spotifyApiHelper {
 
         // sending http request in order to get a token
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(GetTokenUri)
+                .uri(Key.getGetTokenUri())
                 .header("Authorization","Basic " + this.encoder)
                 .headers("Content-Type","application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
@@ -152,5 +137,19 @@ public class spotifyApiHelper {
 
     }
 
+//__________________________________________________________________________________________________________
+//  Getters
+// __________________________________________________________________________________________________________
 
+    public String geAuthorizeUri(){
+        return Key.getAuthorizeUri();
+    }
+
+    public String getUserId(){
+        return Key.getUserId();
+    }
+
+    public String getScope(){
+        return Key.getScope();
+    }
 }
