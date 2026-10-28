@@ -1,6 +1,7 @@
 package ServerHelper;
 
 
+import Objects.Track;
 import Private.ApiKeys;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +21,7 @@ import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,13 +38,14 @@ public class spotifyApiHelper {
 //__________________________________________________________________________________________________________
 //  constructor
 // __________________________________________________________________________________________________________
-    public spotifyApiHelper() throws URISyntaxException {
+    public spotifyApiHelper() throws URISyntaxException, IOException, InterruptedException {
 
         Key = new ApiKeys();
 
         String authorizationCoder = Key.getUserId() + ':' + Key.getSecret();
         encoder = Base64.getEncoder().encodeToString(authorizationCoder.getBytes(StandardCharsets.UTF_8));
 
+        getTracks();
     }
 // __________________________________________________________________________________________________________
 
@@ -89,6 +92,46 @@ public class spotifyApiHelper {
         return new SpotifyApiToken(token,type,expires_in);
     }
 
+    private ArrayList<Track> getTracks () throws URISyntaxException, IOException, InterruptedException {
+        String url = "https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks" +
+                "&api_key=" + Key.getLastApiKey() +
+                "&format=json";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request,HttpResponse.BodyHandlers.ofString());
+
+        return extract_Tracks(response);
+
+    }
+
+    private ArrayList<Track> extract_Tracks(HttpResponse<String>response) throws JsonProcessingException {
+        ArrayList<Track> tracks = new ArrayList<>();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        JsonNode jsonNode = mapper.readTree(response.body());
+
+        JsonNode tracksData = jsonNode.path("tracks").path("track");
+
+        for (JsonNode track : tracksData){
+
+            String name = track.get("name").asText();
+            String artistName = track.get("artist").get("name").asText();
+            String url = track.get("url").asText();
+
+            Track newTrack = new Track(name,artistName,url);
+            tracks.add(newTrack);
+
+            System.out.println(newTrack);
+
+        }
+
+        return tracks;
+    }
 //    public boolean playlistExists(Token token,String name) throws IOException, InterruptedException {
 //
 //        HttpRequest request = HttpRequest.newBuilder()
