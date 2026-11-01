@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,22 @@
 </head>
 
 <body>
+    <div id="TrackDisplay">
+        <div class="Track"
+             th:each= "track : ${tracks}"
+             onclick="toggleSong(this)">
+
+            <a th:herf="${track.trackImgUrl}"
+               th:alt="${track.trackName}"></a>
+
+            <h3 th:text="${track.trackName}"></h3>
+
+            <p th:text="${track.artistName}"></p>
+        </div>
+    </div>
+
+    <button onclick="submitSongs()">Save Songs</button>
+
     <form action="CreatePlaylist" method="post">
 
         <div class="data-field">

@@ -36,27 +36,30 @@ public class spotifyApiHelper {
     private ApiKeys Key;
 
 //__________________________________________________________________________________________________________
-//  constructor
+//  בנאי של המחלקה
 // __________________________________________________________________________________________________________
     public spotifyApiHelper() throws URISyntaxException, IOException, InterruptedException {
 
+        // אובייקט ששומר את המפתחות + קישורים במיקום שבו הגיט לא עוקב
         Key = new ApiKeys();
 
+        // מחרוזת אימות על מנת לקבל טוקן של המשתמש( יעבוד רק על המשתמש שלי - גל נגל)
         String authorizationCoder = Key.getUserId() + ':' + Key.getSecret();
         encoder = Base64.getEncoder().encodeToString(authorizationCoder.getBytes(StandardCharsets.UTF_8));
 
-        getTracks();
     }
 // __________________________________________________________________________________________________________
 
-    // get token for a Specific User
+    //  מטרת המתודה - קבלת טוקן
+    // פרמטקין - קוד (מקבלים ספוטיפיי לאחר הפנייה לcallback), מחרוזת הפנייה
     public SpotifyApiToken getUserToken(String code, String redirect_uri) throws IOException, InterruptedException {
 
+        // ניצור מחרוזת לקבלת טוקן
         String body = "code=" + code +
                     "&redirect_uri="+ redirect_uri +
                     "&grant_type=authorization_code";
 
-        // sending http request in order to get a token
+        // נשלח בקשת http לספוטיפיי על מנת לקבל טוקן
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(Key.getGetTokenUri())
                 .header("Authorization","Basic " + this.encoder)
@@ -64,90 +67,129 @@ public class spotifyApiHelper {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        // get a response
+        // קבלת תשובה
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request,  HttpResponse.BodyHandlers.ofString());
 
 
-        // extract data and return token type data
+        // נוציא את המידע וניצור אובייקט לשמירה
         return extract_token(response);
     }
 
-    // read json response from spotify api in order to get token
+    // נקרא את התשובה בנוגע לקבלת טוקן וניצור אובייקט לשמואר את המידע
     private SpotifyApiToken extract_token (HttpResponse<String> response) throws JsonProcessingException {
 
-        // will be used in order to read json
+        // אובייקט לקריאת גייסון
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode rootNode = objectMapper.readTree(response.body());
 
-        // extract data from json
+        // נוציא את המידע
         String token = rootNode.get("access_token").asText();
         String type = rootNode.get("token_type").asText();
         Long token_expire = rootNode.get("expires_in").asLong();
 
-        // create expire time
+        //ניצור  תאריך תפוגה לטוקן
         LocalDateTime expires_in = LocalDateTime.now().plusSeconds(token_expire);
 
+        // נחזיר אובייקט
         return new SpotifyApiToken(token,type,expires_in);
     }
 
-    private ArrayList<Track> getTracks () throws URISyntaxException, IOException, InterruptedException {
+    // מטרת המתודה - להחזיר רשימת של אובייקט track על מנת להציג למשתמש שירים לבחור לקבלת פלייליסט
+    public ArrayList<Track> getTracks (SpotifyApiToken token) throws URISyntaxException, IOException, InterruptedException {
+
+        // קישור לlast api על מנת לקבלת 50 שיריםן המושמעים ביותר (50 זה ברירת מחדל של הבקשה ניתן לבקש פחות)
         String url = "https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks" +
                 "&api_key=" + Key.getLastApiKey() +
-                "&format=json";
+                "&format=json" +
+                "&limit=1";
 
+        // ניצור בקשה
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(url))
                 .build();
 
+        // נשלח את הבקשה
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request,HttpResponse.BodyHandlers.ofString());
 
-        return extract_Tracks(response);
+        // ניצור רשימה של אובייקטים
+        return extract_Tracks(token,response);
 
     }
 
-    private ArrayList<Track> extract_Tracks(HttpResponse<String>response) throws JsonProcessingException {
+    // מטרת הפונקציה - ליצור רשימה של אובייקט שירים מתשובה של last api
+    private ArrayList<Track> extract_Tracks(SpotifyApiToken token, HttpResponse<String>response) throws IOException, URISyntaxException, InterruptedException {
+
+        // ניצור רשימה ריקה
         ArrayList<Track> tracks = new ArrayList<>();
 
+        // ניצור אובייקט שיעזור לנו לעבור על תשובה
         ObjectMapper mapper = new ObjectMapper();
 
         JsonNode jsonNode = mapper.readTree(response.body());
 
         JsonNode tracksData = jsonNode.path("tracks").path("track");
 
+        // נעבור על כל השירים
         for (JsonNode track : tracksData){
 
+            // נוציא את שם הפלייליסט ושם האומן
             String name = track.get("name").asText();
             String artistName = track.get("artist").get("name").asText();
-            String url = track.get("url").asText();
 
-            Track newTrack = new Track(name,artistName,url);
-            tracks.add(newTrack);
-
-            System.out.println(newTrack);
+            // נפנה ל spotify api על מנת לקבל עוד מידע על השיר
+            tracks.add(GetSpotifyTrackData(token, name,artistName));
 
         }
 
         return tracks;
     }
-//    public boolean playlistExists(Token token,String name) throws IOException, InterruptedException {
-//
-//        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(GetUserPlaylistsUrl)
-//                .headers("Authorization",token.getType() + " " + token.getToken())
-//                .headers("Content-Type","application/json")
-//                .GET()
-//                .build();
-//
-//        HttpResponse <String> response =  HttpClient.newHttpClient()
-//                .send(request,  HttpResponse.BodyHandlers.ofString());
-//
-//        System.out.println("playlistExists methode response " +  response.body());
-//
-//        return true;
-//    }
+
+    // מטרה לקבל עוד מידע על שיר מסוים על מנת לקבל אובייקט שיר
+    private Track GetSpotifyTrackData(SpotifyApiToken token, String name, String artistName) throws URISyntaxException, IOException, InterruptedException {
+
+        // נבקש מספוטיפי לקבל מידע על שיר מסויים של אומן מסויים
+        String url = Key.getSearchUrl()+
+                URLEncoder.encode("track:" + name + " artist:" + artistName,StandardCharsets.UTF_8 )+
+                "&type=track"+
+                "&limit=1";
+
+        // נשלח בקשה
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .headers("Authorization",token.getType() + " " + token.getToken())
+                .GET()
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request,HttpResponse.BodyHandlers.ofString());
+
+
+        return extractTrackData(response ,name, artistName);
+
+    }
+
+    //
+    private Track extractTrackData(HttpResponse<String> response, String name, String artistName) throws JsonProcessingException {
+
+        String id = "";
+        String imgUrl = "";
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        JsonNode jsonNode = mapper.readTree(response.body());
+
+        System.out.println(jsonNode.path("name"));
+
+        System.out.println(
+                mapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(jsonNode)
+        );
+
+       return new Track(id,name,artistName,imgUrl);
+    }
 
     // create playlist with a giving name
     public void create_playlist(SpotifyApiToken token, String name, String description) throws URISyntaxException, IOException, InterruptedException {
@@ -195,4 +237,6 @@ public class spotifyApiHelper {
     public String getScope(){
         return Key.getScope();
     }
-}
+
+
+};

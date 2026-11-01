@@ -2,16 +2,25 @@ package Objects;
 
 public class Track {
 
+    private String id;
     private String trackName;
     private String artistName;
     private  String trackImgUrl;
 
-    public Track(String trackName, String artistName, String trackImgUrl) {
+    public Track(String id, String trackName, String artistName, String trackImgUrl) {
+        this.id = id;
         this.trackName = trackName;
         this.artistName = artistName;
         this.trackImgUrl = trackImgUrl;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getTrackName() {
         return trackName;
@@ -37,11 +46,11 @@ public class Track {
         this.trackImgUrl = trackImgUrl;
     }
 
-
     @Override
     public String toString() {
         return "Track{" +
-                "trackName='" + trackName + '\'' +
+                "id='" + id + '\'' +
+                ", trackName='" + trackName + '\'' +
                 ", artistName='" + artistName + '\'' +
                 ", trackImgUrl='" + trackImgUrl + '\'' +
                 '}';
